@@ -43,6 +43,18 @@ def test_text_plural_and_order(tmp_path, capsys):
     )
 
 
+def test_only_can_be_placed_between_files(tmp_path, capsys):
+    a = write(tmp_path, "a.md", NO_LINK)
+    b = write(tmp_path, "b.md", NO_LINK)
+
+    assert main([a, "--only", "KL009", b]) == 1
+    assert capsys.readouterr().out == (
+        f"{a}:3: KL009 missing link definition for [1.0.0]\n"
+        f"{b}:3: KL009 missing link definition for [1.0.0]\n"
+        "2 problems in 2 files\n"
+    )
+
+
 def test_text_ok(tmp_path, capsys):
     p = write(tmp_path, "a.md", CLEAN)
     assert main([p]) == 0
@@ -88,7 +100,8 @@ def test_disable_unknown_rule(tmp_path, capsys):
         assert main([p, "--disable", rule]) == 2
         captured = capsys.readouterr()
         assert captured.out == ""
-        assert captured.err == f'keeplint: unknown rule "{rule}"\n'
+        hint = " (did you mean KL008?)" if rule == "kl008" else ""
+        assert captured.err == f'keeplint: unknown rule "{rule}"{hint}\n'
 
 
 def test_exit_codes_usage(capsys):

@@ -24,13 +24,14 @@ from a checkout, use `pip install -e .`.
 ## Usage
 
 ```text
-keeplint FILE... [--format text|json] [--disable RULE]...
+keeplint FILE... [--format text|json] [--disable RULE]... [--only RULE]...
 ```
 
 ```text
 keeplint CHANGELOG.md
 keeplint CHANGELOG.md docs/CHANGELOG.md --format json
 keeplint CHANGELOG.md --disable KL008 --disable KL009
+keeplint CHANGELOG.md --only KL004 --only KL009
 python -m keeplint CHANGELOG.md
 git show origin/main:CHANGELOG.md | keeplint -
 ```
@@ -40,6 +41,8 @@ fenced code blocks are ignored by every rule. The file name `-` reads one change
 input (same decoding rules) and reports it under the name `<stdin>`; it may be given once, and can
 be mixed with real files, which are linted in argument order. `--disable` is repeatable and rule
 ids are case-sensitive.
+
+`--only RULE` is the opposite of `--disable`: only findings from the listed rules are reported, and the option is repeatable. It cannot be combined with `--disable` (exit 2). A rule id with the wrong letter case is rejected with a hint, for example `keeplint: unknown rule "kl009" (did you mean KL009?)`.
 
 Library use:
 
@@ -146,7 +149,7 @@ When there are no findings the only output is `ok`.
 | ---- | ------- |
 | 0 | No findings. |
 | 1 | One or more findings. |
-| 2 | Usage error (bad option, no files, unknown rule id, `-` given twice) or an unreadable or non-UTF-8 file. |
+| 2 | Usage error (bad option, no files, an unknown rule id, `--only` together with `--disable`, `-` given twice) or an unreadable or non-UTF-8 file. |
 
 ## CI
 
