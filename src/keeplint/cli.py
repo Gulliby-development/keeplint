@@ -21,9 +21,34 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _has_stdin_argument(argv: Sequence[str]) -> bool:
+    value_follows_option = False
+    options_ended = False
+    for argument in argv:
+        if value_follows_option:
+            value_follows_option = False
+            continue
+        if options_ended:
+            if argument == "-":
+                return True
+            continue
+        if argument == "--":
+            options_ended = True
+        elif argument in ("--format", "--disable"):
+            value_follows_option = True
+        elif argument == "-":
+            return True
+    return False
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     try:
-        args = _parser().parse_args(argv)
+        arguments = list(sys.argv[1:] if argv is None else argv)
+        parser = _parser()
+        if _has_stdin_argument(arguments):
+            args = parser.parse_intermixed_args(arguments)
+        else:
+            args = parser.parse_args(arguments)
     except SystemExit as exc:
         code = exc.code
         return code if isinstance(code, int) else 2
@@ -33,15 +58,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(f'keeplint: unknown rule "{rule}"', file=sys.stderr)
             return 2
 
+    if args.files.count("-") > 1:
+        print("keeplint: standard input given more than once", file=sys.stderr)
+        return 2
+
     texts: list[tuple[str, str]] = []
     for path in args.files:
+        display_path = "<stdin>" if path == "-" else path
         try:
-            texts.append((path, Path(path).read_bytes().decode("utf-8")))
+            raw = sys.stdin.buffer.read() if path == "-" else Path(path).read_bytes()
+            texts.append((display_path, raw.decode("utf-8")))
         except OSError as exc:
-            print(f"keeplint: {path}: {exc.strerror or exc}", file=sys.stderr)
+            print(f"keeplint: {display_path}: {exc.strerror or exc}", file=sys.stderr)
             return 2
         except UnicodeDecodeError as exc:
-            print(f"keeplint: {path}: {exc}", file=sys.stderr)
+            print(f"keeplint: {display_path}: {exc}", file=sys.stderr)
             return 2
 
     disabled = set(args.disable)

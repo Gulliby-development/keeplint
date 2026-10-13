@@ -32,11 +32,14 @@ keeplint CHANGELOG.md
 keeplint CHANGELOG.md docs/CHANGELOG.md --format json
 keeplint CHANGELOG.md --disable KL008 --disable KL009
 python -m keeplint CHANGELOG.md
+git show origin/main:CHANGELOG.md | keeplint -
 ```
 
 Files are read as UTF-8 (a leading BOM is ignored; LF and CRLF are accepted). Lines inside
-fenced code blocks are ignored by every rule. `--disable` is repeatable and rule ids are
-case-sensitive.
+fenced code blocks are ignored by every rule. The file name `-` reads one changelog from standard
+input (same decoding rules) and reports it under the name `<stdin>`; it may be given once, and can
+be mixed with real files, which are linted in argument order. `--disable` is repeatable and rule
+ids are case-sensitive.
 
 Library use:
 
@@ -143,7 +146,7 @@ When there are no findings the only output is `ok`.
 | ---- | ------- |
 | 0 | No findings. |
 | 1 | One or more findings. |
-| 2 | Usage error (bad option, no files, unknown rule id) or an unreadable or non-UTF-8 file. |
+| 2 | Usage error (bad option, no files, unknown rule id, `-` given twice) or an unreadable or non-UTF-8 file. |
 
 ## CI
 
@@ -160,7 +163,7 @@ GitHub Actions step:
 
 ```text
 python -m venv .venv
-# activate it: source .venv/bin/activate (Linux, macOS) or .venv\Scriptsctivate (Windows)
+# activate it: source .venv/bin/activate (Linux, macOS) or .venv\Scripts\activate (Windows)
 pip install -e . pytest ruff
 python -m pytest -q
 python -m ruff check .
