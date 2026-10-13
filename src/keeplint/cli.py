@@ -18,6 +18,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("files", nargs="+", metavar="FILE")
     parser.add_argument("--format", choices=("text", "json"), default="text")
     parser.add_argument("--disable", action="append", default=[], metavar="RULE")
+    parser.add_argument("--only", action="append", default=[], metavar="RULE")
     return parser
 
 
@@ -34,7 +35,7 @@ def _has_stdin_argument(argv: Sequence[str]) -> bool:
             continue
         if argument == "--":
             options_ended = True
-        elif argument in ("--format", "--disable"):
+        elif argument in ("--format", "--disable", "--only"):
             value_follows_option = True
         elif argument == "-":
             return True
@@ -45,7 +46,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         arguments = list(sys.argv[1:] if argv is None else argv)
         parser = _parser()
-        if _has_stdin_argument(arguments):
+        has_only_option = any(
+            argument == "--only" or argument.startswith("--only=") for argument in arguments
+        )
+        if _has_stdin_argument(arguments) or has_only_option:
             args = parser.parse_intermixed_args(arguments)
         else:
             args = parser.parse_args(arguments)
@@ -53,10 +57,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         code = exc.code
         return code if isinstance(code, int) else 2
 
-    for rule in args.disable:
+    for rule in (rule for values in (args.disable, args.only) for rule in values):
         if rule not in RULES:
-            print(f'keeplint: unknown rule "{rule}"', file=sys.stderr)
+            hint = f" (did you mean {rule.upper()}?)" if rule.isascii() and rule.upper() in RULES else ""
+            print(f'keeplint: unknown rule "{rule}"{hint}', file=sys.stderr)
             return 2
+
+    if args.only and args.disable:
+        print("keeplint: --only and --disable cannot be combined", file=sys.stderr)
+        return 2
 
     if args.files.count("-") > 1:
         print("keeplint: standard input given more than once", file=sys.stderr)
@@ -76,8 +85,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 2
 
     disabled = set(args.disable)
+    only = set(args.only)
     results = [
-        (path, [f for f in lint(text) if f.rule not in disabled]) for path, text in texts
+        (path, [f for f in lint(text) if f.rule not in disabled and (not only or f.rule in only)])
+        for path, text in texts
     ]
     formatter = format_json if args.format == "json" else format_text
     sys.stdout.write(formatter(results))
