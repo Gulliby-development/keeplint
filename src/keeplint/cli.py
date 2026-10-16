@@ -17,6 +17,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("files", nargs="+", metavar="FILE")
     parser.add_argument("--format", choices=("text", "json"), default="text")
+    parser.add_argument("--exit-zero", action="store_true")
     parser.add_argument("--disable", action="append", default=[], metavar="RULE")
     parser.add_argument("--only", action="append", default=[], metavar="RULE")
     return parser
@@ -49,7 +50,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         has_only_option = any(
             argument == "--only" or argument.startswith("--only=") for argument in arguments
         )
-        if _has_stdin_argument(arguments) or has_only_option:
+        has_exit_zero_option = "--exit-zero" in arguments
+        if _has_stdin_argument(arguments) or has_only_option or has_exit_zero_option:
             args = parser.parse_intermixed_args(arguments)
         else:
             args = parser.parse_args(arguments)
@@ -92,7 +94,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     ]
     formatter = format_json if args.format == "json" else format_text
     sys.stdout.write(formatter(results))
-    return 1 if any(findings for _, findings in results) else 0
+    return 0 if args.exit_zero else (1 if any(findings for _, findings in results) else 0)
 
 
 if __name__ == "__main__":
