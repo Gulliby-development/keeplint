@@ -24,7 +24,7 @@ from a checkout, use `pip install -e .`.
 ## Usage
 
 ```text
-keeplint FILE... [--format text|json] [--disable RULE]... [--only RULE]...
+keeplint FILE... [--format text|json] [--exit-zero] [--disable RULE]... [--only RULE]...
 ```
 
 ```text
@@ -32,6 +32,7 @@ keeplint CHANGELOG.md
 keeplint CHANGELOG.md docs/CHANGELOG.md --format json
 keeplint CHANGELOG.md --disable KL008 --disable KL009
 keeplint CHANGELOG.md --only KL004 --only KL009
+keeplint CHANGELOG.md --exit-zero
 python -m keeplint CHANGELOG.md
 git show origin/main:CHANGELOG.md | keeplint -
 ```
@@ -43,6 +44,10 @@ be mixed with real files, which are linted in argument order. `--disable` is rep
 ids are case-sensitive.
 
 `--only RULE` is the opposite of `--disable`: only findings from the listed rules are reported, and the option is repeatable. It cannot be combined with `--disable` (exit 2). A rule id with the wrong letter case is rejected with a hint, for example `keeplint: unknown rule "kl009" (did you mean KL009?)`.
+
+`--exit-zero` reports the findings as usual but exits with 0 when there are findings, for a CI step
+that should annotate or log without failing the build. It takes no value and may stand anywhere
+among the arguments. Usage errors and unreadable files still exit with 2.
 
 Library use:
 
@@ -147,8 +152,8 @@ When there are no findings the only output is `ok`.
 
 | Code | Meaning |
 | ---- | ------- |
-| 0 | No findings. |
-| 1 | One or more findings. |
+| 0 | No findings, or any number of findings with `--exit-zero`. |
+| 1 | One or more findings (without `--exit-zero`). |
 | 2 | Usage error (bad option, no files, an unknown rule id, `--only` together with `--disable`, `-` given twice) or an unreadable or non-UTF-8 file. |
 
 ## CI
