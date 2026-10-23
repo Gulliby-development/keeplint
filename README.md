@@ -21,6 +21,9 @@ pip install .
 This installs the `keeplint` console script. `python -m keeplint` works too. For development
 from a checkout, use `pip install -e .`.
 
+The package ships a `py.typed` marker, so type checkers use its annotations when you import
+`keeplint.lint` in your own code.
+
 ## Usage
 
 ```text
