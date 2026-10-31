@@ -10,7 +10,7 @@ from keeplint.rules import Finding
 Results = Sequence[tuple[str, Sequence[Finding]]]
 
 
-def format_text(results: Results) -> str:
+def format_text(results: Results, quiet: bool = False) -> str:
     lines: list[str] = []
     total = 0
     with_findings = 0
@@ -20,6 +20,8 @@ def format_text(results: Results) -> str:
         for f in findings:
             total += 1
             lines.append(f"{path}:{f.line}: {f.rule} {f.message}")
+    if quiet:
+        return "".join(line + "\n" for line in lines)
     if total == 0:
         return "ok\n"
     problems = "problem" if total == 1 else "problems"
