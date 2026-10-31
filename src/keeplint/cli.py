@@ -18,6 +18,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("files", nargs="+", metavar="FILE")
     parser.add_argument("--format", choices=("text", "json"), default="text")
     parser.add_argument("--exit-zero", action="store_true")
+    parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--disable", action="append", default=[], metavar="RULE")
     parser.add_argument("--only", action="append", default=[], metavar="RULE")
     return parser
@@ -51,7 +52,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             argument == "--only" or argument.startswith("--only=") for argument in arguments
         )
         has_exit_zero_option = "--exit-zero" in arguments
-        if _has_stdin_argument(arguments) or has_only_option or has_exit_zero_option:
+        has_quiet_option = "--quiet" in arguments
+        if (
+            _has_stdin_argument(arguments)
+            or has_only_option
+            or has_exit_zero_option
+            or has_quiet_option
+        ):
             args = parser.parse_intermixed_args(arguments)
         else:
             args = parser.parse_args(arguments)
@@ -92,8 +99,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         (path, [f for f in lint(text) if f.rule not in disabled and (not only or f.rule in only)])
         for path, text in texts
     ]
-    formatter = format_json if args.format == "json" else format_text
-    sys.stdout.write(formatter(results))
+    if args.format == "json":
+        sys.stdout.write(format_json(results))
+    else:
+        sys.stdout.write(format_text(results, quiet=args.quiet))
     return 0 if args.exit_zero else (1 if any(findings for _, findings in results) else 0)
 
 

@@ -63,6 +63,9 @@ def test_license_is_mit() -> None:
 
 def test_readme_documents_only_rule_option() -> None:
     readme = _readme()
-    assert "keeplint FILE... [--format text|json] [--exit-zero] [--disable RULE]... [--only RULE]..." in readme
+    assert (
+        "keeplint FILE... [--format text|json] [--exit-zero] [--quiet] [--disable RULE]... [--only RULE]..."
+        in readme
+    )
     assert "keeplint CHANGELOG.md --only KL004 --only KL009" in readme
     assert "did you mean KL009?" in readme

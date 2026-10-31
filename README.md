@@ -27,7 +27,7 @@ The package ships a `py.typed` marker, so type checkers use its annotations when
 ## Usage
 
 ```text
-keeplint FILE... [--format text|json] [--exit-zero] [--disable RULE]... [--only RULE]...
+keeplint FILE... [--format text|json] [--exit-zero] [--quiet] [--disable RULE]... [--only RULE]...
 ```
 
 ```text
@@ -36,6 +36,7 @@ keeplint CHANGELOG.md docs/CHANGELOG.md --format json
 keeplint CHANGELOG.md --disable KL008 --disable KL009
 keeplint CHANGELOG.md --only KL004 --only KL009
 keeplint CHANGELOG.md --exit-zero
+keeplint CHANGELOG.md --quiet
 python -m keeplint CHANGELOG.md
 git show origin/main:CHANGELOG.md | keeplint -
 ```
@@ -47,6 +48,8 @@ be mixed with real files, which are linted in argument order. `--disable` is rep
 ids are case-sensitive.
 
 `--only RULE` is the opposite of `--disable`: only findings from the listed rules are reported, and the option is repeatable. It cannot be combined with `--disable` (exit 2). A rule id with the wrong letter case is rejected with a hint, for example `keeplint: unknown rule "kl009" (did you mean KL009?)`.
+
+`--quiet` shortens the text output: the line `ok` for a clean run and the last line of a run with findings (for example `5 problems in 1 file`) are not printed, so the output is the finding lines and nothing else (empty when there are no findings). The exit code is unchanged, `--format json` prints exactly what it printed before, and the option may be repeated and may stand anywhere among the arguments. `--quiet=1` is a usage error (exit 2) like any option that takes no value.
 
 `--exit-zero` reports the findings as usual but exits with 0 when there are findings, for a CI step
 that should annotate or log without failing the build. It takes no value and may stand anywhere
